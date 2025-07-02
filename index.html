@@ -625,6 +625,132 @@
             padding: 1.5rem;
         }
 
+        .audit-report {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .report-header {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .report-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .report-meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .report-meta-label {
+            font-size: 0.75rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .report-meta-value {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .audit-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .audit-table th {
+            background: #f8fafc;
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            font-weight: 600;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .audit-table td {
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid #f7fafc;
+            color: #4a5568;
+        }
+
+        .audit-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .event-type {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .event-login { background: #c6f6d5; color: #22543d; }
+        .event-logout { background: #fed7d7; color: #742a2a; }
+        .event-access { background: #bee3f8; color: #2a4365; }
+        .event-admin { background: #fbb6ce; color: #702459; }
+        .event-security { background: #feebc8; color: #7b341e; }
+
+        .download-btn {
+            background: #38a169;
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            margin-right: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .download-btn:hover {
+            background: #2f855a;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .summary-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3182ce;
+        }
+
+        .summary-label {
+            font-size: 0.75rem;
+            color: #718096;
+            margin-top: 0.25rem;
+        }
+
         @media (max-width: 1024px) {
             .dashboard-layout {
                 grid-template-columns: 1fr;
@@ -900,6 +1026,21 @@
         </div>
     </div>
 
+    <!-- Audit Report Modal -->
+    <div class="modal" id="auditReportModal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <div class="modal-title">System Audit Report</div>
+                <button class="close-modal" onclick="closeModal('auditReportModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="audit-report" id="auditReportContent">
+                    Loading report...
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Create User Modal -->
     <div class="modal" id="createUserModal">
         <div class="modal-content">
@@ -945,6 +1086,61 @@
         };
 
         let currentUser = null;
+        let systemAuditLog = [];
+        let sessionStartTime = null;
+
+        // Simulate IP address (in production, this would be captured server-side)
+        function getClientIP() {
+            // Simulated IP addresses for demo purposes
+            const ips = ['192.168.1.100', '192.168.1.101', '192.168.1.102', '192.168.1.103', '192.168.1.104'];
+            return ips[Math.floor(Math.random() * ips.length)];
+        }
+
+        // Enhanced audit logging
+        function logAuditEvent(eventType, description, details = {}) {
+            const auditEntry = {
+                timestamp: new Date(),
+                eventType: eventType,
+                username: currentUser ? currentUser.username : 'anonymous',
+                userName: currentUser ? currentUser.name : 'Anonymous',
+                userRole: currentUser ? currentUser.role : 'N/A',
+                ipAddress: getClientIP(),
+                description: description,
+                details: details,
+                sessionId: sessionStartTime ? sessionStartTime.getTime() : null
+            };
+            
+            systemAuditLog.push(auditEntry);
+            
+            // Update visible activity log (simplified version)
+            updateVisibleActivityLog(auditEntry);
+        }
+
+        // Update the visible activity log in sidebar
+        function updateVisibleActivityLog(auditEntry) {
+            const auditLog = document.getElementById('auditLog');
+            const newEntry = document.createElement('div');
+            newEntry.className = 'activity-item';
+            
+            const timeString = auditEntry.timestamp.toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            newEntry.innerHTML = `
+                <div class="activity-time">${timeString}</div>
+                <div class="activity-text">${auditEntry.description}</div>
+            `;
+            
+            auditLog.insertBefore(newEntry, auditLog.firstChild);
+            
+            // Keep only last 10 entries in visible log
+            const entries = auditLog.querySelectorAll('.activity-item');
+            if (entries.length > 10) {
+                entries[entries.length - 1].remove();
+            }
+        }
 
         // Login functionality
         document.getElementById('loginForm').addEventListener('submit', function(e) {
@@ -956,9 +1152,14 @@
             
             if (users[username] && users[username].password === password) {
                 currentUser = { username: username, ...users[username] };
+                sessionStartTime = new Date();
                 
-                // Log successful login
-                addAuditLog(`${currentUser.name} logged in successfully`);
+                // Log successful login with detailed information
+                logAuditEvent('LOGIN', `${currentUser.name} logged in successfully`, {
+                    loginMethod: 'username_password',
+                    browserInfo: navigator.userAgent,
+                    sessionStart: sessionStartTime
+                });
                 
                 // Hide login screen and show dashboard
                 document.getElementById('loginScreen').classList.add('hidden');
@@ -969,11 +1170,14 @@
                 
                 errorDiv.classList.add('hidden');
             } else {
+                // Log failed login attempt
+                logAuditEvent('SECURITY', `Failed login attempt for: ${username}`, {
+                    attemptedUsername: username,
+                    reason: 'invalid_credentials'
+                });
+                
                 errorDiv.textContent = 'Invalid username or password';
                 errorDiv.classList.remove('hidden');
-                
-                // Log failed login attempt
-                addAuditLog(`Failed login attempt for: ${username}`);
             }
         });
 
@@ -997,14 +1201,190 @@
             if (currentUser.role === 'Admin') {
                 if (action === 'createuser') {
                     document.getElementById('createUserModal').style.display = 'block';
+                    logAuditEvent('ADMIN', `${currentUser.name} opened user creation modal`);
+                } else if (action === 'report') {
+                    generateAuditReport();
                 } else {
                     alert(`Admin access granted for ${action}`);
+                    logAuditEvent('ADMIN', `${currentUser.name} accessed admin feature: ${action}`);
                 }
-                addAuditLog(`${currentUser.name} accessed admin feature: ${action}`);
             } else {
                 alert('Only Administrator Privileges can access');
-                addAuditLog(`${currentUser.name} attempted to access admin feature: ${action}`);
+                logAuditEvent('SECURITY', `${currentUser.name} attempted to access admin feature: ${action}`, {
+                    deniedAction: action,
+                    reason: 'insufficient_privileges'
+                });
             }
+        }
+
+        // Generate comprehensive audit report
+        function generateAuditReport() {
+            const reportContent = document.getElementById('auditReportContent');
+            const reportDate = new Date();
+            
+            // Calculate statistics
+            const totalEvents = systemAuditLog.length;
+            const loginEvents = systemAuditLog.filter(e => e.eventType === 'LOGIN').length;
+            const accessEvents = systemAuditLog.filter(e => e.eventType === 'ACCESS').length;
+            const adminEvents = systemAuditLog.filter(e => e.eventType === 'ADMIN').length;
+            const securityEvents = systemAuditLog.filter(e => e.eventType === 'SECURITY').length;
+            
+            const uniqueUsers = [...new Set(systemAuditLog.map(e => e.userName))].length;
+            const uniqueIPs = [...new Set(systemAuditLog.map(e => e.ipAddress))].length;
+            
+            // Generate report HTML
+            reportContent.innerHTML = `
+                <div class="report-header">
+                    <h3 style="margin-bottom: 0.5rem; color: #2d3748;">USVT Internal Data Centre - System Audit Report</h3>
+                    <div class="report-meta">
+                        <div class="report-meta-item">
+                            <div class="report-meta-label">Report Generated</div>
+                            <div class="report-meta-value">${reportDate.toLocaleString()}</div>
+                        </div>
+                        <div class="report-meta-item">
+                            <div class="report-meta-label">Generated By</div>
+                            <div class="report-meta-value">${currentUser.name} (Admin)</div>
+                        </div>
+                        <div class="report-meta-item">
+                            <div class="report-meta-label">Report Period</div>
+                            <div class="report-meta-value">Session Activity</div>
+                        </div>
+                        <div class="report-meta-item">
+                            <div class="report-meta-label">Total Events</div>
+                            <div class="report-meta-value">${totalEvents}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="summary-stats">
+                    <div class="summary-card">
+                        <div class="summary-number">${loginEvents}</div>
+                        <div class="summary-label">Login Events</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-number">${accessEvents}</div>
+                        <div class="summary-label">Resource Access</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-number">${adminEvents}</div>
+                        <div class="summary-label">Admin Actions</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-number">${securityEvents}</div>
+                        <div class="summary-label">Security Events</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-number">${uniqueUsers}</div>
+                        <div class="summary-label">Unique Users</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-number">${uniqueIPs}</div>
+                        <div class="summary-label">Unique IPs</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <button class="download-btn" onclick="downloadReport()">
+                        <i class="fas fa-download"></i>
+                        Download CSV
+                    </button>
+                    <button class="download-btn" onclick="printReport()">
+                        <i class="fas fa-print"></i>
+                        Print Report
+                    </button>
+                </div>
+
+                <table class="audit-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Event Type</th>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>IP Address</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${systemAuditLog.map(entry => `
+                            <tr>
+                                <td>${entry.timestamp.toLocaleString()}</td>
+                                <td><span class="event-type event-${entry.eventType.toLowerCase()}">${entry.eventType}</span></td>
+                                <td>${entry.userName}</td>
+                                <td>${entry.userRole}</td>
+                                <td>${entry.ipAddress}</td>
+                                <td>${entry.description}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            // Show the modal
+            document.getElementById('auditReportModal').style.display = 'block';
+            
+            // Log the report generation
+            logAuditEvent('ADMIN', `${currentUser.name} generated system audit report`, {
+                reportEvents: totalEvents,
+                reportType: 'full_audit'
+            });
+        }
+
+        // Download report as CSV
+        function downloadReport() {
+            const headers = ['Timestamp', 'Event Type', 'User', 'Role', 'IP Address', 'Description', 'Details'];
+            const csvContent = [
+                headers.join(','),
+                ...systemAuditLog.map(entry => [
+                    `"${entry.timestamp.toISOString()}"`,
+                    entry.eventType,
+                    `"${entry.userName}"`,
+                    entry.userRole,
+                    entry.ipAddress,
+                    `"${entry.description}"`,
+                    `"${JSON.stringify(entry.details)}"`
+                ].join(','))
+            ].join('\\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `USVT_Audit_Report_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            logAuditEvent('ADMIN', `${currentUser.name} downloaded audit report as CSV`);
+        }
+
+        // Print report
+        function printReport() {
+            const printContent = document.getElementById('auditReportContent').innerHTML;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>USVT Audit Report</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                            th { background-color: #f8f9fa; }
+                            .event-type { padding: 2px 6px; border-radius: 3px; font-size: 11px; }
+                            .event-login { background: #c6f6d5; color: #22543d; }
+                            .event-logout { background: #fed7d7; color: #742a2a; }
+                            .event-access { background: #bee3f8; color: #2a4365; }
+                            .event-admin { background: #fbb6ce; color: #702459; }
+                            .event-security { background: #feebc8; color: #7b341e; }
+                        </style>
+                    </head>
+                    <body>${printContent}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+            
+            logAuditEvent('ADMIN', `${currentUser.name} printed audit report`);
         }
 
         // Create new user (admin only)
@@ -1027,7 +1407,12 @@
                 role: newUserRole
             };
             
-            addAuditLog(`${currentUser.name} created new user: ${newUserName} (${newUserRole})`);
+            logAuditEvent('ADMIN', `${currentUser.name} created new user: ${newUserName}`, {
+                newUsername: newUsername,
+                newUserRole: newUserRole,
+                action: 'user_creation'
+            });
+            
             alert(`User ${newUserName} created successfully`);
             closeModal('createUserModal');
             document.getElementById('createUserForm').reset();
@@ -1036,8 +1421,16 @@
         // Logout function
         function logout() {
             if (currentUser) {
-                addAuditLog(`${currentUser.name} logged out`);
+                const sessionDuration = sessionStartTime ? 
+                    Math.round((new Date() - sessionStartTime) / 1000 / 60) : 0;
+                    
+                logAuditEvent('LOGOUT', `${currentUser.name} logged out`, {
+                    sessionDuration: `${sessionDuration} minutes`,
+                    logoutMethod: 'manual'
+                });
+                
                 currentUser = null;
+                sessionStartTime = null;
             }
             
             document.getElementById('mainDashboard').classList.add('hidden');
@@ -1048,41 +1441,22 @@
             document.getElementById('loginError').classList.add('hidden');
         }
 
-        // Add audit log entry
+        // Add audit log entry (legacy function for compatibility)
         function addAuditLog(message) {
-            const auditLog = document.getElementById('auditLog');
-            const newEntry = document.createElement('div');
-            newEntry.className = 'activity-item';
-            
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('en-US', { 
-                hour12: false, 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-            
-            newEntry.innerHTML = `
-                <div class="activity-time">${timeString}</div>
-                <div class="activity-text">${message}</div>
-            `;
-            
-            auditLog.insertBefore(newEntry, auditLog.firstChild);
-            
-            // Keep only last 10 entries
-            const entries = auditLog.querySelectorAll('.activity-item');
-            if (entries.length > 10) {
-                entries[entries.length - 1].remove();
-            }
+            logAuditEvent('SYSTEM', message);
         }
 
         // Update time
         function updateTime() {
             const now = new Date();
-            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', {
-                hour12: false,
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            const timeElement = document.getElementById('currentTime');
+            if (timeElement) {
+                timeElement.textContent = now.toLocaleTimeString('en-US', {
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
         }
         updateTime();
         setInterval(updateTime, 1000);
@@ -1091,6 +1465,10 @@
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
             const sections = document.querySelectorAll('.category-section');
+            
+            if (searchTerm) {
+                logAuditEvent('ACCESS', `${currentUser.name} searched for: "${searchTerm}"`);
+            }
             
             sections.forEach(section => {
                 const title = section.querySelector('.category-title').textContent.toLowerCase();
@@ -1111,7 +1489,10 @@
         function openResource(url, name) {
             window.open(url, '_blank');
             if (currentUser) {
-                addAuditLog(`${currentUser.name} accessed: ${name}`);
+                logAuditEvent('ACCESS', `${currentUser.name} accessed: ${name}`, {
+                    resourceUrl: url,
+                    accessMethod: 'direct_link'
+                });
             }
         }
 
@@ -1125,6 +1506,9 @@
                 event.target.style.display = 'none';
             }
         }
+
+        // Initialize system
+        logAuditEvent('SYSTEM', 'USVT Internal Data Centre portal initialized');
     </script>
 </body>
 </html>

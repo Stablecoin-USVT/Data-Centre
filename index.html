@@ -745,10 +745,92 @@
             color: #3182ce;
         }
 
-        .summary-label {
+        .restricted-section {
+            position: relative;
+            filter: blur(3px);
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .access-denied-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            backdrop-filter: blur(2px);
+        }
+
+        .access-denied-message {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border: 1px solid #e53e3e;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .permission-manager {
+            margin-bottom: 1.5rem;
+        }
+
+        .permission-grid {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .permission-label {
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        .permission-checkboxes {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .permission-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .permission-checkbox input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .role-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
             font-size: 0.75rem;
-            color: #718096;
-            margin-top: 0.25rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .role-admin {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .role-user {
+            background: #bee3f8;
+            color: #2a4365;
+        }
+
+        .role-guest {
+            background: #feebc8;
+            color: #7b341e;
         }
 
         @media (max-width: 1024px) {
@@ -873,7 +955,7 @@
                                 </div>
                                 <div class="resource-meta">
                                     <div class="status-badge status-active">Active</div>
-                                    <a href="https://stablecoin-usvt.github.io/internal-strategy/" target="_blank" class="action-button primary" onclick="event.stopPropagation(); trackResourceAction('https://stablecoin-usvt.github.io/internal-strategy/', 'Internal Strategy', 'opened via button')">
+                                    <a href="https://stablecoin-usvt.github.io/internal-strategy/" target="_blank" class="action-button primary" onclick="event.stopPropagation(); if(trackResourceAction('https://stablecoin-usvt.github.io/internal-strategy/', 'Internal Strategy', 'opened via button')) { return true; } else { event.preventDefault(); return false; }">
                                         <i class="fas fa-external-link-alt"></i>
                                         Open
                                     </a>
@@ -902,7 +984,7 @@
                                 </div>
                                 <div class="resource-meta">
                                     <div class="status-badge status-active">Active</div>
-                                    <a href="https://stablecoin-usvt.github.io/evolution-global-monetary-system/" target="_blank" class="action-button primary" onclick="event.stopPropagation(); trackResourceAction('https://stablecoin-usvt.github.io/evolution-global-monetary-system/', 'Evolution Global Monetary System', 'opened via button')">
+                                    <a href="https://stablecoin-usvt.github.io/evolution-global-monetary-system/" target="_blank" class="action-button primary" onclick="event.stopPropagation(); if(trackResourceAction('https://stablecoin-usvt.github.io/evolution-global-monetary-system/', 'Evolution Global Monetary System', 'opened via button')) { return true; } else { event.preventDefault(); return false; }">
                                         <i class="fas fa-external-link-alt"></i>
                                         Open
                                     </a>
@@ -977,7 +1059,7 @@
                                     <div class="stat-label">Uptime</div>
                                 </div>
                                 <div class="stat-item">
-                                    <div class="stat-number">5</div>
+                                    <div class="stat-number">6</div>
                                     <div class="stat-label">Users</div>
                                 </div>
                             </div>
@@ -1018,10 +1100,107 @@
                                     <i class="fas fa-user-plus"></i>
                                     Create New User
                                 </button>
+                                <button class="quick-action-btn admin-only" id="managePermissionsBtn" onclick="checkAdminAccess('permissions')" style="display: none;">
+                                    <i class="fas fa-shield-alt"></i>
+                                    Manage Permissions
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permissions Management Modal -->
+    <div class="modal" id="permissionsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Manage Role Permissions</div>
+                <button class="close-modal" onclick="closeModal('permissionsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="permission-manager">
+                    <p style="margin-bottom: 1rem; color: #718096; font-size: 0.875rem;">
+                        Configure which sections each role can access. Unchecked sections will be blurred and inaccessible.
+                    </p>
+                    
+                    <div class="permission-grid">
+                        <div class="permission-label">Strategic Planning:</div>
+                        <div class="permission-checkboxes">
+                            <label class="permission-checkbox">
+                                <input type="checkbox" id="perm_strategy_admin" checked disabled>
+                                <span class="role-badge role-admin">Admin</span>
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" id="perm_strategy_user" checked>
+                                <span class="role-badge role-user">User</span>
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" id="perm_strategy_guest">
+                                <span class="role-badge role-guest">Guest</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="permission-grid">
+                        <div class="permission-label">Market Analysis:</div>
+                        <div class="permission-checkboxes">
+                            <label class="permission-checkbox">
+                                <input type="checkbox" id="perm_analysis_admin" checked disabled>
+                                <span class="role-badge role-admin">Admin</span>
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" id="perm_analysis_user" checked>
+                                <span class="role-badge role-user">User</span>
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" id="perm_analysis_guest">
+                                <span class="role-badge role-guest">Guest</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="permission-grid">
+                        <div class="permission-label">Documentation:</div>
+                        <div class="permission-checkboxes">
+                            <label class="permission-checkbox">
+                                <input type="checkbox" id="perm_docs_admin" checked disabled>
+                                <span class="role-badge role-admin">Admin</span>
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" id="perm_docs_user" checked>
+                                <span class="role-badge role-user">User</span>
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" id="perm_docs_guest" checked>
+                                <span class="role-badge role-guest">Guest</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="permission-grid">
+                        <div class="permission-label">Reports & Analytics:</div>
+                        <div class="permission-checkboxes">
+                            <label class="permission-checkbox">
+                                <input type="checkbox" id="perm_reports_admin" checked disabled>
+                                <span class="role-badge role-admin">Admin</span>
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" id="perm_reports_user">
+                                <span class="role-badge role-user">User</span>
+                            </label>
+                            <label class="permission-checkbox">
+                                <input type="checkbox" id="perm_reports_guest">
+                                <span class="role-badge role-guest">Guest</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="login-button" onclick="savePermissions()">
+                    <i class="fas fa-save"></i> Save Permissions
+                </button>
             </div>
         </div>
     </div>
@@ -1066,6 +1245,7 @@
                         <label class="form-label" for="newUserRole">Role</label>
                         <select class="form-input" id="newUserRole">
                             <option value="User">User</option>
+                            <option value="Guest">Guest</option>
                             <option value="Admin">Admin</option>
                         </select>
                     </div>

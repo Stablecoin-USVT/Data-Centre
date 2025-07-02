@@ -873,7 +873,7 @@
                                 </div>
                                 <div class="resource-meta">
                                     <div class="status-badge status-active">Active</div>
-                                    <a href="https://stablecoin-usvt.github.io/internal-strategy/" target="_blank" class="action-button primary" onclick="event.stopPropagation()">
+                                    <a href="https://stablecoin-usvt.github.io/internal-strategy/" target="_blank" class="action-button primary" onclick="event.stopPropagation(); trackResourceAction('https://stablecoin-usvt.github.io/internal-strategy/', 'Internal Strategy', 'opened via button')">
                                         <i class="fas fa-external-link-alt"></i>
                                         Open
                                     </a>
@@ -902,7 +902,7 @@
                                 </div>
                                 <div class="resource-meta">
                                     <div class="status-badge status-active">Active</div>
-                                    <a href="https://stablecoin-usvt.github.io/evolution-global-monetary-system/" target="_blank" class="action-button primary" onclick="event.stopPropagation()">
+                                    <a href="https://stablecoin-usvt.github.io/evolution-global-monetary-system/" target="_blank" class="action-button primary" onclick="event.stopPropagation(); trackResourceAction('https://stablecoin-usvt.github.io/evolution-global-monetary-system/', 'Evolution Global Monetary System', 'opened via button')">
                                         <i class="fas fa-external-link-alt"></i>
                                         Open
                                     </a>
@@ -1491,7 +1491,22 @@
             if (currentUser) {
                 logAuditEvent('ACCESS', `${currentUser.name} accessed: ${name}`, {
                     resourceUrl: url,
-                    accessMethod: 'direct_link'
+                    accessMethod: 'direct_link',
+                    resourceType: url.includes('internal-strategy') ? 'Strategic Planning' : 
+                                 url.includes('evolution-global') ? 'Market Analysis' : 'Document',
+                    openedInNewTab: true
+                });
+            }
+        }
+
+        // Enhanced resource tracking for action buttons
+        function trackResourceAction(url, name, action) {
+            if (currentUser) {
+                logAuditEvent('ACCESS', `${currentUser.name} ${action}: ${name}`, {
+                    resourceUrl: url,
+                    accessMethod: action,
+                    resourceType: url.includes('internal-strategy') ? 'Strategic Planning' : 
+                                 url.includes('evolution-global') ? 'Market Analysis' : 'Document'
                 });
             }
         }
